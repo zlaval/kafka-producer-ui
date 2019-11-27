@@ -1,6 +1,7 @@
 package com.zlrx.kafka.producerui.ui
 
 import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
@@ -16,68 +17,124 @@ import com.zlrx.kafka.producerui.message.ProducerProps
 import com.zlrx.kafka.producerui.service.KafkaService
 import org.springframework.beans.factory.annotation.Autowired
 
+/**
+ *
+ * *********************VERTICAL_LAYOUT**************************
+ *    KAFKA      *   TOPIC    *  HEADER HORIZ  * _______________*
+ *  HORIZONTAL   * HORIZONTAL *+++ITEM_VERT++++*|    HEADER    |*
+ *  _____________*   _______  *+ ____  ______ +*|     GRID     |*
+ * |KAFKA BROKER|*  |TOPIC |  *+|KEY| |VALUE| +*|              |*
+ * ------------- *  -------   *+----  ------  +*|              |*
+ * ______________*  _______   *++++++++++++++++*|              |*
+ *|SCHEMAREG URL|* | KEY  |   *  ________      * ---------------*
+ * ------------- * -------    * |ADD BTN|      *                *
+ *               *            * --------       *                *
+ * **************************************************************
+ *  __________________________________________________________  *
+ * |                        JSON TEXTAREA                     | *
+ * |                                                          | *
+ * | _________________________________________________________| *
+ *   _________                                                  *
+ *  |SEND BTN|                                                  *
+ *  ---------                                                   *
+ ****************************************************************
+ */
+//v2 -> register kafka, pick from select
+//v2 -> register topic with header-> pick
 @Route
-class MainView @Autowired constructor(kafkaService: KafkaService) : VerticalLayout() {
+class MainView @Autowired constructor(private val kafkaService: KafkaService) : VerticalLayout() {
+
+    private val propertyLayout = HorizontalLayout()
+
+    private val brokerTxtField = TextField()
+    private val registryTextField = TextField()
 
     private val topicTxtField = TextField()
     private val keyTxtField = TextField()
-    private val messageTxtArea = TextArea()
-    private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
 
     private val headerTypeTxt = TextField()
     private val headerValueTxt = TextField()
     private val addToHeadersButton = Button("Add", Icon(VaadinIcon.PLUS_CIRCLE))
+    private val headerGrid = Grid<Header>(Header::class.java)
+
+    private val messageTxtArea = TextArea()
+    private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
 
     private val headers = mutableListOf<Header>()
 
     init {
-        val propertyLayout = HorizontalLayout()
-        propertyLayout.setSizeFull()
+        setSizeFull()
+        propertyLayout.setWidthFull()
+        this.add(propertyLayout)
+        registerKafkaLayout()
+        registerTopicLayout()
+        registerHeaderLayout()
+        registerHeaderGrid()
+        registerJsonMessageArea()
+        registerSendBtn()
+    }
+
+    private fun registerKafkaLayout() {
+        val layout = VerticalLayout()
+        layout.setSizeFull()
+        brokerTxtField.label = "Kafka broker"
+        brokerTxtField.value = "kafka:29092"
+        brokerTxtField.setWidthFull()
+        registryTextField.label = "Schema registry url"
+        registryTextField.value = "http://schema-registry:8081"
+        registryTextField.setWidthFull()
+        layout.add(brokerTxtField, registryTextField)
+        propertyLayout.add(layout)
+    }
+
+    private fun registerTopicLayout() {
         val topicLayout = VerticalLayout()
-        val headerLayout = VerticalLayout()
-        headerLayout.setSizeFull()
-
-
+        topicLayout.setSizeFull()
         topicTxtField.label = "Topic name"
-        topicTxtField.placeholder = "will be created if not exists"
-
+        topicTxtField.placeholder = "Auto create if not exists"
+        topicTxtField.setWidthFull()
         keyTxtField.label = "Key (optional)"
+        keyTxtField.setWidthFull()
         topicLayout.add(topicTxtField, keyTxtField)
+        propertyLayout.add(topicLayout)
+    }
 
-
-        headerTypeTxt.label = "Header key";
-        headerValueTxt.label = "Header value"
+    private fun registerHeaderLayout() {
+        val headerLayout = VerticalLayout()
+        headerLayout.setWidthFull()
         val headerItemLayout = HorizontalLayout()
         headerItemLayout.setSizeFull()
+        headerTypeTxt.label = "Header key";
+        headerTypeTxt.value = ""
+        headerTypeTxt.setWidthFull()
+        headerValueTxt.label = "Header value"
+        headerValueTxt.value = ""
+        headerValueTxt.setWidthFull()
         headerItemLayout.add(headerTypeTxt, headerValueTxt)
-
-        val grid = Grid<Header>(Header::class.java)
-        grid.setItems(headers)
-        grid.pageSize = 5
-        grid.setSizeFull()
-        grid.setColumns("key", "value")
-
-        addToHeadersButton.addClickListener {
-            val key = headerTypeTxt.value
-            val value = headerValueTxt.value
-            if (value != null && key != null && !value.isBlank() && !key.isBlank()) {
-                headers.add(Header(key, value))
-                grid.dataProvider.refreshAll()
-                headerTypeTxt.value = ""
-                headerValueTxt.value = ""
-            } else {
-                Notification.show("Header key and value field is required!", 3000, Notification.Position.MIDDLE)
-            }
-        }
-
+        registerAddToHeaderBtnClickListener()
         headerLayout.add(headerItemLayout, addToHeadersButton)
-        propertyLayout.add(topicLayout, headerLayout, grid)
+        propertyLayout.add(headerLayout)
+    }
 
+    private fun registerHeaderGrid() {
+        headerGrid.setItems(headers)
+        headerGrid.pageSize = 4
+        headerGrid.setWidthFull()
+        headerGrid.setColumns("key", "value")
+        headerGrid.style.set("maxHeight", "200px")
+        propertyLayout.add(headerGrid)
+    }
+
+    private fun registerJsonMessageArea() {
         messageTxtArea.label = "Message JSON"
         messageTxtArea.style.set("minHeight", "500px")
-        //messageTxtArea.style.set("minWidth", "100%")
         messageTxtArea.setSizeFull()
+        this.add(messageTxtArea)
+    }
 
+    private fun registerSendBtn() {
+        sendBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        sendBtn.style.set("minHeight", "40px")
         sendBtn.addClickListener {
             kafkaService.sendMessage(MessageData(
                 topicTxtField.value,
@@ -85,15 +142,33 @@ class MainView @Autowired constructor(kafkaService: KafkaService) : VerticalLayo
                 messageTxtArea.value,
                 headers,
                 ProducerProps(
-                    "localhost:29092", "http://localhost:8081"
+                    brokerTxtField.value,
+                    registryTextField.value
                 )
-
             ))
+            Notification.show("Message was sent into the given topic!", 3000, Notification.Position.MIDDLE)
+            cleanUp()
         }
-
-        this.add(propertyLayout, messageTxtArea, sendBtn)
-
+        this.add(sendBtn)
     }
 
+    private fun registerAddToHeaderBtnClickListener() {
+        addToHeadersButton.addClickListener {
+            val key = headerTypeTxt.value
+            val value = headerValueTxt.value
+            if (!value.isBlank() && !key.isBlank()) {
+                headers.add(Header(key, value))
+                headerGrid.dataProvider.refreshAll()
+                headerTypeTxt.value = ""
+                headerValueTxt.value = ""
+            } else {
+                Notification.show("Header key and value fields are required!", 3000, Notification.Position.MIDDLE)
+            }
+        }
+    }
+
+    fun cleanUp() {
+        //TODO clean up field after message was sent
+    }
 
 }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 @Service
 class KafkaService @Autowired constructor(val container: ProducerContainer) {
 
-
+    //v2 validate messageData
     fun sendMessage(messageData: MessageData) {
         val producer = container.getOrPut(messageData.props, Producer(messageData.props));
         producer.produce(messageData)
