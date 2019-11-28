@@ -78,7 +78,7 @@ class MainView @Autowired constructor(private val kafkaService: KafkaService) : 
         val layout = VerticalLayout()
         layout.setSizeFull()
         brokerTxtField.label = "Kafka broker"
-        brokerTxtField.value = "kafka:29092"
+        brokerTxtField.value = "kafka:9092"
         brokerTxtField.setWidthFull()
         registryTextField.label = "Schema registry url"
         registryTextField.value = "http://schema-registry:8081"

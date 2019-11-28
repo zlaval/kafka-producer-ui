@@ -8,6 +8,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("pl.allegro.tech.build.axion-release") version "1.10.0"
     id("com.bmuschko.docker-remote-api") version "6.0.0"
+    id("com.bmuschko.docker-spring-boot-application") version "6.0.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
@@ -15,7 +16,7 @@ plugins {
 }
 
 group = "com.zlrx.kafka"
-version = "0.0.1-SNAPSHOT"
+version = scmVersion.version
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -38,9 +39,17 @@ val dockerEmail: String by project
 
 docker {
     registryCredentials {
+        url.set("https://index.docker.io/v1")
         username.set(dockerUser)
         password.set(dockerPw)
         email.set(dockerEmail)
+    }
+    springBootApplication {
+        baseImage.set("timbru31/java-node")
+        ports.set(listOf(8080))
+        maintainer.set("zalerix 'zalerix@gmail.com'")
+        images.set(setOf("zalerix/kafka-avro-publish-ui:latest"))
+        jvmArgs.set(listOf("-Xmx512m"))
     }
 }
 
@@ -79,12 +88,3 @@ tasks.withType<KotlinCompile> {
         jvmTarget = "1.8"
     }
 }
-
-//val createDockerFile=tasks.create<com.bmuschko.gradle.docker.tasks.image.Dockerfile>("createDockerFile"){
-//    from("openjdk:8-jre-alpine")
-//    copyFile("","")
-//
-//    destFile=project.file("build/docker/Dockerfile")
-//
-//
-//}
