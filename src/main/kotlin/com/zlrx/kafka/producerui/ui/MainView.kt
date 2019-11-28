@@ -162,7 +162,7 @@ class MainView @Autowired constructor(private val kafkaService: KafkaService) : 
                 headerTypeTxt.value = ""
                 headerValueTxt.value = ""
             } else {
-                Notification.show("Header key and value fields are required!", 3000, Notification.Position.MIDDLE)
+                Notification.show("Header key and value fields are required!", 2000, Notification.Position.MIDDLE)
             }
         }
     }
