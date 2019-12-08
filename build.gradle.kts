@@ -9,6 +9,7 @@ plugins {
     id("pl.allegro.tech.build.axion-release") version "1.10.0"
     id("com.bmuschko.docker-remote-api") version "6.0.0"
     id("com.bmuschko.docker-spring-boot-application") version "6.0.0"
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.3.61"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
@@ -18,6 +19,12 @@ plugins {
 group = "com.zlrx.kafka"
 version = scmVersion.version
 java.sourceCompatibility = JavaVersion.VERSION_1_8
+
+allOpen {
+    annotation("javax.persistence.Entity")
+    annotation("javax.persistence.MappedSuperclass")
+    annotation("javax.persistence.Embeddable")
+}
 
 repositories {
     mavenCentral()
@@ -55,6 +62,7 @@ docker {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("com.vaadin:vaadin-spring-boot-starter")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

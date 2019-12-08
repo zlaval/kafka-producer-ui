@@ -1,0 +1,2 @@
+id                              ,version,name        ,broker    ,schema_registry
+c4395630e5e14df9b0b3c3a6e0afe312,0      ,Docker Kafka,kafka:9092,http://schema-registry:8081

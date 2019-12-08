@@ -1,0 +1,191 @@
+databaseChangeLog:
+  - changeSet:
+      id: 201912072300-1
+      author: zalerix
+      changes:
+        - createTable:
+            tableName: connection
+            columns:
+              - column:
+                  name: id
+                  type: varchar(32)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: broker
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: schema_registry
+                  type: varchar(255)
+              - column:
+                  name: version
+                  type: BIGINT
+        - createTable:
+            tableName: topic
+            columns:
+              - column:
+                  name: id
+                  type: varchar(32)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: topic_name
+                  type: varchar(255)
+        - createTable:
+            tableName: message
+            columns:
+              - column:
+                  name: id
+                  type: varchar(32)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: key
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: text
+                  type: clob
+        - createTable:
+            tableName: header
+            columns:
+              - column:
+                  name: id
+                  type: varchar(32)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: message_id
+                  type: varchar(32)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: key
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: value
+                  type: varchar(255)
+        - createTable:
+            tableName: configuration
+            columns:
+              - column:
+                  name: id
+                  type: varchar(32)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: connection_id
+                  type: varchar(32)
+              - column:
+                  name: message_id
+                  type: varchar(32)
+              - column:
+                  name: topic_id
+                  type: varchar(32)
+              - column:
+                  name: default_config
+                  type: BOOLEAN
+        - addForeignKeyConstraint:
+            baseColumnNames: message_id
+            baseTableName: configuration
+            constraintName: config_message_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+            referencedColumnNames: id
+            referencedTableName: message
+            validate: true
+        - addForeignKeyConstraint:
+            baseColumnNames: connection_id
+            baseTableName: configuration
+            constraintName: config_connection_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+            referencedColumnNames: id
+            referencedTableName: connection
+            validate: true
+        - addForeignKeyConstraint:
+            baseColumnNames: topic_id
+            baseTableName: configuration
+            constraintName: config_topic_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+            referencedColumnNames: id
+            referencedTableName: topic
+            validate: true
+        - addForeignKeyConstraint:
+            baseColumnNames: message_id
+            baseTableName: header
+            constraintName: message_header_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+            referencedColumnNames: id
+            referencedTableName: message
+            validate: true
+  - changeSet:
+      id: 201912072300-2
+      author: zalerix
+      changes:
+        loadData:
+          tableName: connection
+          file: migration/connection.csv
+          encoding: UTF-8
+          separator: ","
+  - changeSet:
+      id: 201912072300-3
+      author: zalerix
+      changes:
+        loadData:
+          tableName: configuration
+          file: migration/configuration.csv
+          encoding: UTF-8
+          separator: ","
