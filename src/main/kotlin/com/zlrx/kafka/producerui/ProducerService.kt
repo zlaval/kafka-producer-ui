@@ -14,4 +14,8 @@ class ProducerService @Autowired constructor(
 
     fun loadConnections(): List<Connection> = connectionRepository.findByOrderByName()
 
+    fun saveConnection(name: String, broker: String, schema: String): Connection {
+        return connectionRepository.save(Connection(name, broker, schema))
+    }
+
 }

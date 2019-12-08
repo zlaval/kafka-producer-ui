@@ -1,11 +1,8 @@
 package com.zlrx.kafka.producerui.message
 
-data class Header(
-    val key: String,
-    val value: String
-)
+import com.zlrx.kafka.producerui.domain.Header
 
-//v2: key,value generic
+
 data class MessageData(
     val topic: String,
     val key: String?,

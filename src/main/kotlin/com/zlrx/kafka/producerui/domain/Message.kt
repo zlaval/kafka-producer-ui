@@ -9,10 +9,10 @@ import javax.persistence.Table
 @Entity
 @Table(name = "message")
 class Message(
-    val key: String,
+    val key: String? = null,
 
     @Lob
-    val text: String,
+    val text: String? = null,
 
     @OneToMany(mappedBy = "message", cascade = [CascadeType.ALL], orphanRemoval = true)
     var headers: MutableList<Header> = mutableListOf()

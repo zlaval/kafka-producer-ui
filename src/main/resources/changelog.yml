@@ -65,13 +65,9 @@ databaseChangeLog:
                   name: version
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: key
                   type: varchar(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: text
                   type: clob
         - createTable:

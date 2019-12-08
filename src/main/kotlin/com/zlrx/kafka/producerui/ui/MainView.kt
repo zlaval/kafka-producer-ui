@@ -4,7 +4,7 @@ import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
-import com.vaadin.flow.component.html.Div
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.notification.Notification
@@ -16,10 +16,11 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
 import com.zlrx.kafka.producerui.ProducerService
 import com.zlrx.kafka.producerui.domain.Connection
-import com.zlrx.kafka.producerui.message.Header
+import com.zlrx.kafka.producerui.domain.Header
 import com.zlrx.kafka.producerui.message.MessageData
 import com.zlrx.kafka.producerui.message.ProducerProps
 import com.zlrx.kafka.producerui.service.KafkaService
+import com.zlrx.kafka.producerui.ui.component.ArrowText
 import com.zlrx.kafka.producerui.ui.component.Divider
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -70,25 +71,56 @@ class MainView @Autowired constructor(
     private fun registerConnectionDialog() {
         connectionDialog.isCloseOnEsc = true
         connectionDialog.isCloseOnOutsideClick = false
+        connectionDialog.width = "450px"
+        val layout = VerticalLayout()
+        layout.setSizeFull()
+        val nameTxt = TextField()
+        val brokerTxt = TextField()
+        val schemaTxt = TextField()
+        nameTxt.setSizeFull()
+        brokerTxt.setSizeFull()
+        schemaTxt.setSizeFull()
+        nameTxt.label = "Name"
+        brokerTxt.label = "Kafka broker"
+        schemaTxt.label = "Schema registry"
 
+        val buttonLayout = HorizontalLayout()
+        val closeBtn = Button("Close")
+        val saveBtn = Button("Save")
+        saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+
+        closeBtn.addClickListener { connectionDialog.close() }
+        saveBtn.addClickListener {
+            //TODO validate
+            val newConnection = producerService.saveConnection(nameTxt.value, brokerTxt.value, schemaTxt.value)
+            connectionSelect.setItems(producerService.loadConnections())
+            connectionSelect.value = newConnection
+            nameTxt.value = ""
+            brokerTxt.value = ""
+            schemaTxt.value = ""
+            connectionDialog.close()
+        }
+        buttonLayout.add(saveBtn, closeBtn)
+        layout.add(nameTxt, brokerTxt, schemaTxt)
+        connectionDialog.add(layout, buttonLayout)
     }
 
     private fun registerKafkaLayout() {
         val layout = VerticalLayout()
         layout.setWidthFull()
 
-        val kafkaDiv = Div()
-        kafkaDiv.text = "Broker: not selected"
-        val registryDiv = Div()
-        registryDiv.text = "Registry: not selected"
+        val kafkaDiv = ArrowText("Broker", "Not selected")
+        val registryDiv = ArrowText("Registry", "Not selected")
 
         connectionSelect.label = "Connection"
         connectionSelect.setSizeFull()
         connectionSelect.setItems(producerService.loadConnections())
         connectionSelect.setTextRenderer { it.name }
         connectionSelect.addValueChangeListener {
-            kafkaDiv.text = "Broker: ${it.value.broker}"
-            registryDiv.text = "Registry: ${it.value.schemaRegistry}"
+            if (it.value != null) {
+                kafkaDiv.text = "Broker: ${it.value.broker}"
+                registryDiv.text = "Registry: ${it.value.schemaRegistry}"
+            }
         }
 
         addConnectionBtn.addClickListener { connectionDialog.open() }
@@ -131,6 +163,14 @@ class MainView @Autowired constructor(
         headerGrid.setSizeFull()
         headerGrid.setColumns("key", "value")
         headerGrid.style.set("maxHeight", "300px")
+
+        val contextMenu = GridContextMenu<Header>(headerGrid)
+        contextMenu.addItem("Remove") {
+            it.item.ifPresent { h ->
+                headers.remove(h)
+                headerGrid.dataProvider.refreshAll()
+            }
+        }
         propertyLayout.add(headerGrid)
     }
 
@@ -145,6 +185,7 @@ class MainView @Autowired constructor(
         sendBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         sendBtn.style.set("minHeight", "40px")
         sendBtn.addClickListener {
+            //TODO validate
             kafkaService.sendMessage(MessageData(
                 topicTxtField.value,
                 keyTxtField.value,

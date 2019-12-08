@@ -13,5 +13,5 @@ class Header(
 
     @ManyToOne
     @JoinColumn(name = "message_id")
-    val message: Message
+    val message: Message? = null
 ) : BaseEntity()
