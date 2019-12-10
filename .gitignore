@@ -148,3 +148,4 @@ gradle/
 /webpack.generated.js
 /package-lock.json
 gradle.properties
+json/

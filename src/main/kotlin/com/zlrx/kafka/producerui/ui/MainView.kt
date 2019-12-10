@@ -2,6 +2,7 @@ package com.zlrx.kafka.producerui.ui
 
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
+import com.vaadin.flow.component.combobox.ComboBox
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu
@@ -10,15 +11,21 @@ import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup
 import com.vaadin.flow.component.select.Select
 import com.vaadin.flow.component.textfield.TextArea
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.InitialPageSettings
+import com.vaadin.flow.server.PageConfigurator
 import com.zlrx.kafka.producerui.ProducerService
 import com.zlrx.kafka.producerui.domain.Connection
 import com.zlrx.kafka.producerui.domain.Header
+import com.zlrx.kafka.producerui.message.FileData
+import com.zlrx.kafka.producerui.message.FilePath
 import com.zlrx.kafka.producerui.message.MessageData
 import com.zlrx.kafka.producerui.message.ProducerProps
+import com.zlrx.kafka.producerui.service.FileHandlerService
 import com.zlrx.kafka.producerui.service.KafkaService
 import com.zlrx.kafka.producerui.ui.component.ArrowText
 import com.zlrx.kafka.producerui.ui.component.Divider
@@ -29,8 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired
 @Route
 class MainView @Autowired constructor(
     private val kafkaService: KafkaService,
-    private val producerService: ProducerService
-) : HorizontalLayout() {
+    private val producerService: ProducerService,
+    private val fileHandlerService: FileHandlerService
+) : HorizontalLayout(), PageConfigurator {
 
     private val propertyLayout = VerticalLayout()
     private val messageLayout = VerticalLayout()
@@ -45,10 +53,12 @@ class MainView @Autowired constructor(
     private val addToHeadersButton = Button("Add", Icon(VaadinIcon.PLUS_CIRCLE))
     private val headerGrid = Grid<Header>(Header::class.java)
 
+    private val fileComboBox = ComboBox<FilePath>()
     private val messageTxtArea = TextArea()
+    private val messageTypeSelector = RadioButtonGroup<String>()
     private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
     private val addConnectionBtn = Button("New", Icon(VaadinIcon.PLUS_CIRCLE))
-
+    val fileLayout = HorizontalLayout()
     private val headers = mutableListOf<Header>()
 
     private val connectionDialog: Dialog = Dialog()
@@ -63,9 +73,45 @@ class MainView @Autowired constructor(
         registerTopicLayout()
         registerHeaderLayout()
         registerHeaderGrid()
+        registerMessageTypeSelector()
+        registerFilesComboBox()
         registerJsonMessageArea()
         registerSendBtn()
         registerConnectionDialog()
+
+    }
+
+    private fun loadDefaultConfiguration() {
+        //TODO
+    }
+
+    private fun registerFilesComboBox() {
+        val refreshButton = Button(Icon(VaadinIcon.REFRESH))
+        refreshButton.addClickListener {
+            fileComboBox.setItems(fileHandlerService.readFilesFromDir())
+        }
+        fileLayout.isVisible = false
+        fileLayout.width = "60%"
+        fileComboBox.setItems(fileHandlerService.readFilesFromDir())
+        fileComboBox.width = "50%"
+        fileComboBox.setItemLabelGenerator { it.name }
+        fileLayout.add(fileComboBox, refreshButton)
+        messageLayout.add(fileLayout)
+    }
+
+    private fun registerMessageTypeSelector() {
+        messageTypeSelector.setItems("Text", "File")
+        messageTypeSelector.value = "Text"
+        messageTypeSelector.addValueChangeListener {
+            if (messageTypeSelector.value == "Text") {
+                messageTxtArea.isVisible = true
+                fileLayout.isVisible = false
+            } else {
+                messageTxtArea.isVisible = false
+                fileLayout.isVisible = true
+            }
+        }
+        messageLayout.add(messageTypeSelector)
     }
 
     private fun registerConnectionDialog() {
@@ -186,18 +232,36 @@ class MainView @Autowired constructor(
         sendBtn.style.set("minHeight", "40px")
         sendBtn.addClickListener {
             //TODO validate
-            kafkaService.sendMessage(MessageData(
-                topicTxtField.value,
-                keyTxtField.value,
-                messageTxtArea.value,
-                headers,
-                ProducerProps(
-                    connectionSelect.value.broker,
-                    connectionSelect.value.schemaRegistry
+            if (messageTypeSelector.value == "Text") {
+                kafkaService.sendMessage(MessageData(
+                    topicTxtField.value,
+                    keyTxtField.value,
+                    messageTxtArea.value,
+                    headers,
+                    ProducerProps(
+                        connectionSelect.value.broker,
+                        connectionSelect.value.schemaRegistry
+                    )
+                ))
+                Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
+                cleanUp()
+            } else {
+                //TODO validate
+                Notification.show("Messages from file was started to send into the given topic!", 1500, Notification.Position.MIDDLE)
+                kafkaService.sendMessageFromFile(
+                    FileData(
+                        topicTxtField.value,
+                        keyTxtField.value,
+                        fileComboBox.value,
+                        headers,
+                        ProducerProps(
+                            connectionSelect.value.broker,
+                            connectionSelect.value.schemaRegistry
+                        )
+                    )
                 )
-            ))
-            Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
-            cleanUp()
+                Notification.show("All message has been processed from the file, it may take time while it will be written to the given topic", 3000, Notification.Position.MIDDLE)
+            }
         }
         messageLayout.add(sendBtn)
     }
@@ -219,6 +283,10 @@ class MainView @Autowired constructor(
 
     fun cleanUp() {
         //TODO clean up field after message was sent, savable property to clean up
+    }
+
+    override fun configurePage(settings: InitialPageSettings?) {
+        settings?.loadingIndicatorConfiguration?.isApplyDefaultTheme = false
     }
 
 }

@@ -40,9 +40,9 @@ configurations.forEach {
     it.exclude(module = "mockito-core")
 }
 
-val dockerUser: String by project
-val dockerPw: String by project
-val dockerEmail: String by project
+val dockerUser: String? by project
+val dockerPw: String? by project
+val dockerEmail: String? by project
 
 docker {
     registryCredentials {

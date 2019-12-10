@@ -1,5 +1,7 @@
-package com.zlrx.kafka.producerui.message
+package com.zlrx.kafka.producerui.service
 
+import com.zlrx.kafka.producerui.message.MessageData
+import com.zlrx.kafka.producerui.message.ProducerProps
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -34,5 +36,12 @@ class Producer(props: ProducerProps) {
         producer.send(record).get()
     }
 
+    fun produceAsync(messageData: MessageData) {
+        val headers = messageData.headers?.map {
+            RecordHeader(it.key, it.value.toByteArray())
+        }
+        val record = ProducerRecord(messageData.topic, 0, messageData.key, messageData.message, headers)
+        producer.send(record)
+    }
 
 }
