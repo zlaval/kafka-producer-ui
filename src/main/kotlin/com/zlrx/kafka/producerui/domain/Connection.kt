@@ -9,11 +9,11 @@ import javax.persistence.Table
 @Table(name = "connection")
 class Connection(
 
-    val name: String,
+    var name: String,
 
-    val broker: String,
+    var broker: String,
 
     @Column(name = "schema_registry")
-    val schemaRegistry: String
+    var schemaRegistry: String
 
 ) : BaseEntity()

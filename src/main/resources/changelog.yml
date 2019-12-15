@@ -181,12 +181,30 @@ databaseChangeLog:
       author: zalerix
       changes:
         loadData:
+          tableName: message
+          file: migration/message.csv
+          encoding: UTF-8
+          separator: ","
+  - changeSet:
+      id: 201912072300-3
+      author: zalerix
+      changes:
+        loadData:
+          tableName: topic
+          file: migration/topic.csv
+          encoding: UTF-8
+          separator: ","
+  - changeSet:
+      id: 201912072300-4
+      author: zalerix
+      changes:
+        loadData:
           tableName: connection
           file: migration/connection.csv
           encoding: UTF-8
           separator: ","
   - changeSet:
-      id: 201912072300-3
+      id: 201912072300-5
       author: zalerix
       changes:
         loadData:

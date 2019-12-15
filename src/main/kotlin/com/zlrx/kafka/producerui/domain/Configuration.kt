@@ -12,17 +12,17 @@ import javax.persistence.Table
 class Configuration(
     @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
     @JoinColumn(name = "connection_id")
-    val connection: Connection,
+    var connection: Connection,
 
     @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
     @JoinColumn(name = "message_id")
-    val message: Message? = null,
+    var message: Message,
 
     @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
     @JoinColumn(name = "topic_id")
-    val topic: Topic? = null,
+    var topic: Topic,
 
     @Column(name = "default_config")
-    val default: Boolean = false
+    var default: Boolean = false
 
 ) : BaseEntity()

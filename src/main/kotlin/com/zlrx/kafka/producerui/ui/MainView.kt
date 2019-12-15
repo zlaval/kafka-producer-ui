@@ -1,5 +1,6 @@
 package com.zlrx.kafka.producerui.ui
 
+import com.vaadin.flow.component.Text
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.combobox.ComboBox
@@ -9,6 +10,7 @@ import com.vaadin.flow.component.grid.contextmenu.GridContextMenu
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.notification.Notification
+import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup
@@ -21,6 +23,8 @@ import com.vaadin.flow.server.PageConfigurator
 import com.zlrx.kafka.producerui.domain.Configuration
 import com.zlrx.kafka.producerui.domain.Connection
 import com.zlrx.kafka.producerui.domain.Header
+import com.zlrx.kafka.producerui.domain.Message
+import com.zlrx.kafka.producerui.domain.Topic
 import com.zlrx.kafka.producerui.message.FileData
 import com.zlrx.kafka.producerui.message.FilePath
 import com.zlrx.kafka.producerui.message.MessageData
@@ -43,10 +47,11 @@ class MainView @Autowired constructor(
 
     private val propertyLayout = VerticalLayout()
     private val messageLayout = VerticalLayout()
+    private val messageBtnLayout = HorizontalLayout()
 
     private val connectionSelect = Select<Connection>()
 
-    private val topicTxtField = TextField()
+    private val topicSelect = Select<Topic>()
     private val keyTxtField = TextField()
 
     private val headerTypeTxt = TextField()
@@ -58,19 +63,23 @@ class MainView @Autowired constructor(
     private val messageTxtArea = TextArea()
     private val messageTypeSelector = RadioButtonGroup<String>()
     private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
-    private val addConnectionBtn = Button("New", Icon(VaadinIcon.PLUS_CIRCLE))
-    private val fileLayout = HorizontalLayout()
-    private val headers = mutableListOf<Header>()
+    private val newBtn = Button("Save", Icon(VaadinIcon.CHECK_CIRCLE))
+    private val addConnectionBtn = Button(Icon(VaadinIcon.PLUS_CIRCLE))
+    private val addTopicBtn = Button(Icon(VaadinIcon.PLUS_CIRCLE))
+    private val fileLayout = VerticalLayout()
 
     private val connectionDialog: Dialog = Dialog()
+    private val topicDialog: Dialog = Dialog()
 
-    private var configuration: Configuration? = null
+    private var configuration: Configuration
 
     init {
+        configuration = producerService.loadDefaultConfiguration()
         setSizeFull()
         propertyLayout.setHeightFull()
         propertyLayout.width = "45%"
         messageLayout.setSizeFull()
+        messageBtnLayout.setWidthFull()
         this.add(propertyLayout, messageLayout)
         registerKafkaLayout()
         registerTopicLayout()
@@ -80,21 +89,18 @@ class MainView @Autowired constructor(
         registerFilesComboBox()
         registerJsonMessageArea()
         registerSendBtn()
+        registerNewButton()
         registerConnectionDialog()
+        registerTopicDialog()
         loadDefaultConfiguration()
+        messageLayout.add(messageBtnLayout)
     }
 
     private fun loadDefaultConfiguration() {
-        configuration = producerService.loadDefaultConfiguration()
-
-        configuration?.let {
+        configuration.let {
             connectionSelect.value = it.connection
-            topicTxtField.value = it.topic?.topicName ?: ""
+            topicSelect.value = it.topic
             keyTxtField.value = it.message?.key ?: ""
-            val savedHeaders = it.message?.headers ?: mutableListOf()
-            headers.clear()
-            headers.addAll(savedHeaders)
-            headerGrid.dataProvider.refreshAll()
             val isFile = it.message?.file ?: false
             messageTypeSelector.value = if (isFile) "File" else "Text"
             if (isFile) {
@@ -106,7 +112,24 @@ class MainView @Autowired constructor(
     }
 
     private fun saveConfiguration() {
+        //TODO if save as new
+        configuration.connection = connectionSelect.value
+        configuration.topic = topicSelect.value
+        buildMessage(configuration.message)
+        configuration = producerService.saveConfiguration(configuration)
+        loadConfiguration(configuration)
+    }
 
+    private fun buildMessage(message: Message) {
+        message.file = messageTypeSelector.value == "File"
+        message.fileName = fileComboBox.value?.name
+        message.filePath = fileComboBox.value?.path
+        message.key = keyTxtField.value
+        message.text = messageTxtArea.value
+    }
+
+    private fun loadConfiguration(configuration: Configuration) {
+        //TODO load selected configuration
     }
 
     private fun registerFilesComboBox() {
@@ -119,7 +142,12 @@ class MainView @Autowired constructor(
         fileComboBox.setItems(fileHandlerService.readFilesFromDir())
         fileComboBox.width = "50%"
         fileComboBox.setItemLabelGenerator { it.name }
-        fileLayout.add(fileComboBox, refreshButton)
+        val comboLayout = HorizontalLayout()
+        comboLayout.setSizeFull()
+        comboLayout.add(fileComboBox, refreshButton)
+        comboLayout.isMargin = false
+        val text = Text("The file content will be sent line by line!")
+        fileLayout.add(text, comboLayout)
         messageLayout.add(fileLayout)
     }
 
@@ -136,6 +164,39 @@ class MainView @Autowired constructor(
             }
         }
         messageLayout.add(messageTypeSelector)
+    }
+
+    private fun registerTopicDialog() {
+        topicDialog.isCloseOnEsc = true
+        topicDialog.isCloseOnOutsideClick = false
+        topicDialog.width = "450px"
+        val layout = VerticalLayout()
+        layout.setSizeFull()
+        val nameTxt = TextField()
+        val topicTxt = TextField()
+        nameTxt.setSizeFull()
+        topicTxt.setSizeFull()
+        nameTxt.label = "Visible name"
+        topicTxt.label = "Topic name"
+
+        val buttonLayout = HorizontalLayout()
+        val closeBtn = Button("Close")
+        val saveBtn = Button("Save")
+        saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+
+        closeBtn.addClickListener { connectionDialog.close() }
+        saveBtn.addClickListener {
+            //TODO validate
+            val newTopic = producerService.saveTopic(nameTxt.value, topicTxt.value)
+            topicSelect.setItems(producerService.loadTopics())
+            topicSelect.value = newTopic
+            nameTxt.value = ""
+            topicTxt.value = ""
+            topicDialog.close()
+        }
+        buttonLayout.add(saveBtn, closeBtn)
+        layout.add(nameTxt, topicTxt)
+        topicDialog.add(layout, buttonLayout)
     }
 
     private fun registerConnectionDialog() {
@@ -178,10 +239,11 @@ class MainView @Autowired constructor(
     private fun registerKafkaLayout() {
         val layout = VerticalLayout()
         layout.setWidthFull()
-
         val kafkaDiv = ArrowText("Broker", "Not selected")
         val registryDiv = ArrowText("Registry", "Not selected")
-
+        val connectionSelectLayout = HorizontalLayout()
+        connectionSelectLayout.setSizeFull()
+        connectionSelectLayout.alignItems = FlexComponent.Alignment.BASELINE
         connectionSelect.label = "Connection"
         connectionSelect.setSizeFull()
         connectionSelect.setItems(producerService.loadConnections())
@@ -192,23 +254,32 @@ class MainView @Autowired constructor(
                 registryDiv.text = "Registry: ${it.value.schemaRegistry}"
             }
         }
-
         addConnectionBtn.addClickListener { connectionDialog.open() }
         addConnectionBtn.style.set("minHeight", "35px")
-
-        layout.add(connectionSelect, kafkaDiv, registryDiv, addConnectionBtn)
+        connectionSelectLayout.add(connectionSelect, addConnectionBtn)
+        layout.add(connectionSelectLayout, kafkaDiv, registryDiv)
         propertyLayout.add(layout, Divider())
     }
 
     private fun registerTopicLayout() {
         val topicLayout = VerticalLayout()
         topicLayout.setWidthFull()
-        topicTxtField.label = "Topic name"
-        topicTxtField.placeholder = "Auto create if not exists"
-        topicTxtField.setWidthFull()
+
+        val topicSelectLayout = HorizontalLayout()
+        topicSelectLayout.setSizeFull()
+        topicSelect.label = "Topic name"
+        topicSelect.setWidthFull()
+        topicSelect.setTextRenderer { it.name }
+        topicSelect.setItems(producerService.loadTopics())
+        addTopicBtn.addClickListener { topicDialog.open() }
+        addTopicBtn.style.set("minHeight", "35px")
+
+        topicSelectLayout.add(topicSelect, addTopicBtn)
+        topicSelectLayout.alignItems = FlexComponent.Alignment.BASELINE
+
         keyTxtField.label = "Key (optional)"
         keyTxtField.setWidthFull()
-        topicLayout.add(topicTxtField, keyTxtField)
+        topicLayout.add(topicSelectLayout, keyTxtField)
         propertyLayout.add(topicLayout, Divider())
     }
 
@@ -228,7 +299,7 @@ class MainView @Autowired constructor(
     }
 
     private fun registerHeaderGrid() {
-        headerGrid.setItems(headers)
+        headerGrid.setItems(configuration.message.headers)
         headerGrid.pageSize = 4
         headerGrid.setSizeFull()
         headerGrid.setColumns("key", "value")
@@ -237,7 +308,7 @@ class MainView @Autowired constructor(
         val contextMenu = GridContextMenu<Header>(headerGrid)
         contextMenu.addItem("Remove") {
             it.item.ifPresent { h ->
-                headers.remove(h)
+                configuration.message.headers.remove(h)
                 headerGrid.dataProvider.refreshAll()
             }
         }
@@ -251,6 +322,14 @@ class MainView @Autowired constructor(
         messageLayout.add(messageTxtArea)
     }
 
+    private fun registerNewButton() {
+        newBtn.style.set("minHeight", "40px")
+        newBtn.addClickListener {
+            saveConfiguration()
+        }
+        messageBtnLayout.add(newBtn)
+    }
+
     private fun registerSendBtn() {
         sendBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         sendBtn.style.set("minHeight", "40px")
@@ -258,10 +337,10 @@ class MainView @Autowired constructor(
             //TODO validate
             if (messageTypeSelector.value == "Text") {
                 kafkaService.sendMessage(MessageData(
-                    topicTxtField.value,
+                    topicSelect.value.topicName,
                     keyTxtField.value,
                     messageTxtArea.value,
-                    headers,
+                    configuration.message.headers,
                     ProducerProps(
                         connectionSelect.value.broker,
                         connectionSelect.value.schemaRegistry
@@ -274,10 +353,10 @@ class MainView @Autowired constructor(
                 Notification.show("Messages from file was started to send into the given topic!", 1500, Notification.Position.MIDDLE)
                 kafkaService.sendMessageFromFile(
                     FileData(
-                        topicTxtField.value,
+                        topicSelect.value.topicName,
                         keyTxtField.value,
                         fileComboBox.value,
-                        headers,
+                        configuration.message.headers,
                         ProducerProps(
                             connectionSelect.value.broker,
                             connectionSelect.value.schemaRegistry
@@ -287,7 +366,7 @@ class MainView @Autowired constructor(
                 Notification.show("All message has been processed from the file, it may take time while it will be written to the given topic", 3000, Notification.Position.MIDDLE)
             }
         }
-        messageLayout.add(sendBtn)
+        messageBtnLayout.add(sendBtn)
     }
 
     private fun registerAddToHeaderBtnClickListener() {
@@ -295,7 +374,7 @@ class MainView @Autowired constructor(
             val key = headerTypeTxt.value
             val value = headerValueTxt.value
             if (!value.isBlank() && !key.isBlank()) {
-                headers.add(Header(key, value))
+                configuration.message.headers.add(Header(key, value, configuration.message))
                 headerGrid.dataProvider.refreshAll()
                 headerTypeTxt.value = ""
                 headerValueTxt.value = ""

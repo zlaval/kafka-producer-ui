@@ -8,10 +8,12 @@ import javax.persistence.Table
 @Entity
 @Table(name = "header")
 class Header(
-    val key: String,
-    val value: String,
+
+    var key: String,
+
+    var value: String,
 
     @ManyToOne
     @JoinColumn(name = "message_id")
-    val message: Message? = null
+    var message: Message
 ) : BaseEntity()

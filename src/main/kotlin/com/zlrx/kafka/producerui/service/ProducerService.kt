@@ -2,8 +2,10 @@ package com.zlrx.kafka.producerui.service
 
 import com.zlrx.kafka.producerui.domain.Configuration
 import com.zlrx.kafka.producerui.domain.Connection
+import com.zlrx.kafka.producerui.domain.Topic
 import com.zlrx.kafka.producerui.repository.ConfigurationRepository
 import com.zlrx.kafka.producerui.repository.ConnectionRepository
+import com.zlrx.kafka.producerui.repository.TopicRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,15 +14,22 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class ProducerService @Autowired constructor(
     val connectionRepository: ConnectionRepository,
-    val configurationRepository: ConfigurationRepository
+    val configurationRepository: ConfigurationRepository,
+    val topicRepository: TopicRepository
 ) {
 
     fun loadConnections(): List<Connection> = connectionRepository.findByOrderByName()
+
+    fun loadTopics(): List<Topic> = topicRepository.findByOrderByName()
 
     fun saveConnection(name: String, broker: String, schema: String): Connection {
         return connectionRepository.save(Connection(name, broker, schema))
     }
 
-    fun loadDefaultConfiguration(): Configuration? = configurationRepository.findByDefaultTrue()
+    fun saveTopic(name: String, topic: String): Topic = topicRepository.save(Topic(name, topic))
+
+    fun saveConfiguration(configuration: Configuration) = configurationRepository.save(configuration)
+
+    fun loadDefaultConfiguration(): Configuration = configurationRepository.findByDefaultTrue()
 
 }

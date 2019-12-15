@@ -7,9 +7,9 @@ import javax.persistence.Table
 @Entity
 @Table(name = "topic")
 class Topic(
-    val name: String,
+    var name: String,
 
     @Column(name = "topic_name")
-    val topicName: String
+    var topicName: String
 
 ) : BaseEntity()
