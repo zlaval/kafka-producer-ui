@@ -18,7 +18,7 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.InitialPageSettings
 import com.vaadin.flow.server.PageConfigurator
-import com.zlrx.kafka.producerui.ProducerService
+import com.zlrx.kafka.producerui.domain.Configuration
 import com.zlrx.kafka.producerui.domain.Connection
 import com.zlrx.kafka.producerui.domain.Header
 import com.zlrx.kafka.producerui.message.FileData
@@ -27,6 +27,7 @@ import com.zlrx.kafka.producerui.message.MessageData
 import com.zlrx.kafka.producerui.message.ProducerProps
 import com.zlrx.kafka.producerui.service.FileHandlerService
 import com.zlrx.kafka.producerui.service.KafkaService
+import com.zlrx.kafka.producerui.service.ProducerService
 import com.zlrx.kafka.producerui.ui.component.ArrowText
 import com.zlrx.kafka.producerui.ui.component.Divider
 import org.springframework.beans.factory.annotation.Autowired
@@ -58,10 +59,12 @@ class MainView @Autowired constructor(
     private val messageTypeSelector = RadioButtonGroup<String>()
     private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
     private val addConnectionBtn = Button("New", Icon(VaadinIcon.PLUS_CIRCLE))
-    val fileLayout = HorizontalLayout()
+    private val fileLayout = HorizontalLayout()
     private val headers = mutableListOf<Header>()
 
     private val connectionDialog: Dialog = Dialog()
+
+    private var configuration: Configuration? = null
 
     init {
         setSizeFull()
@@ -78,11 +81,32 @@ class MainView @Autowired constructor(
         registerJsonMessageArea()
         registerSendBtn()
         registerConnectionDialog()
-
+        loadDefaultConfiguration()
     }
 
     private fun loadDefaultConfiguration() {
-        //TODO
+        configuration = producerService.loadDefaultConfiguration()
+
+        configuration?.let {
+            connectionSelect.value = it.connection
+            topicTxtField.value = it.topic?.topicName ?: ""
+            keyTxtField.value = it.message?.key ?: ""
+            val savedHeaders = it.message?.headers ?: mutableListOf()
+            headers.clear()
+            headers.addAll(savedHeaders)
+            headerGrid.dataProvider.refreshAll()
+            val isFile = it.message?.file ?: false
+            messageTypeSelector.value = if (isFile) "File" else "Text"
+            if (isFile) {
+                fileComboBox.value = FilePath(it.message?.fileName!!, it.message?.filePath!!)
+            } else {
+                messageTxtArea.value = it.message?.text ?: ""
+            }
+        }
+    }
+
+    private fun saveConfiguration() {
+
     }
 
     private fun registerFilesComboBox() {

@@ -70,6 +70,15 @@ databaseChangeLog:
               - column:
                   name: text
                   type: clob
+              - column:
+                  name: file_path
+                  type: varchar(255)
+              - column:
+                  name: file_name
+                  type: varchar(255)
+              - column:
+                  name: file
+                  type: BOOLEAN
         - createTable:
             tableName: header
             columns:
