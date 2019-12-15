@@ -26,7 +26,7 @@ class KafkaService @Autowired constructor(
         var rows: List<String> = fileHandlerService.getLinesInBatch(fileData.filePath.path, start)
         while (rows.isNotEmpty()) {
             for (line in rows) {
-                producer.produceAsync(MessageData(
+                producer.produce(MessageData(
                     fileData.topic,
                     fileData.key,
                     line,

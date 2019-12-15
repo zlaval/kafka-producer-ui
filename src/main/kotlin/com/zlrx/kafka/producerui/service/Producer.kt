@@ -34,16 +34,7 @@ class Producer(props: ProducerProps) {
         val headers = messageData.headers?.map {
             RecordHeader(it.key, it.value.toByteArray())
         }
-        val record = ProducerRecord(messageData.topic, 0, messageData.key, messageData.message, headers)
+        val record = ProducerRecord(messageData.topic, null, messageData.key, messageData.message, headers)
         producer.send(record).get()
     }
-
-    fun produceAsync(messageData: MessageData) {
-        val headers = messageData.headers?.map {
-            RecordHeader(it.key, it.value.toByteArray())
-        }
-        val record = ProducerRecord(messageData.topic, 0, messageData.key, messageData.message, headers)
-        producer.send(record)
-    }
-
 }

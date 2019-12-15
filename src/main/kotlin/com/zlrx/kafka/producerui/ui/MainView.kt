@@ -117,6 +117,7 @@ class MainView @Autowired constructor(
         configuration.topic = topicSelect.value
         buildMessage(configuration.message)
         configuration = producerService.saveConfiguration(configuration)
+        Notification.show("Saved", 2000, Notification.Position.MIDDLE)
         loadConfiguration(configuration)
     }
 
@@ -335,35 +336,39 @@ class MainView @Autowired constructor(
         sendBtn.style.set("minHeight", "40px")
         sendBtn.addClickListener {
             //TODO validate
-            if (messageTypeSelector.value == "Text") {
-                kafkaService.sendMessage(MessageData(
-                    topicSelect.value.topicName,
-                    keyTxtField.value,
-                    messageTxtArea.value,
-                    configuration.message.headers,
-                    ProducerProps(
-                        connectionSelect.value.broker,
-                        connectionSelect.value.schemaRegistry
-                    )
-                ))
-                Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
-                cleanUp()
-            } else {
-                //TODO validate
-                Notification.show("Messages from file was started to send into the given topic!", 1500, Notification.Position.MIDDLE)
-                kafkaService.sendMessageFromFile(
-                    FileData(
+            try {
+                if (messageTypeSelector.value == "Text") {
+                    kafkaService.sendMessage(MessageData(
                         topicSelect.value.topicName,
                         keyTxtField.value,
-                        fileComboBox.value,
+                        messageTxtArea.value,
                         configuration.message.headers,
                         ProducerProps(
                             connectionSelect.value.broker,
                             connectionSelect.value.schemaRegistry
                         )
+                    ))
+                    Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
+                    cleanUp()
+                } else {
+                    //TODO validate
+                    Notification.show("Messages from file was started to send into the given topic!", 1500, Notification.Position.MIDDLE)
+                    kafkaService.sendMessageFromFile(
+                        FileData(
+                            topicSelect.value.topicName,
+                            keyTxtField.value,
+                            fileComboBox.value,
+                            configuration.message.headers,
+                            ProducerProps(
+                                connectionSelect.value.broker,
+                                connectionSelect.value.schemaRegistry
+                            )
+                        )
                     )
-                )
-                Notification.show("All message has been processed from the file, it may take time while it will be written to the given topic", 3000, Notification.Position.MIDDLE)
+                    Notification.show("All message has been processed from the file, it may take time while it will be written to the given topic", 3000, Notification.Position.MIDDLE)
+                }
+            } catch (e: Exception) {
+                Notification.show("Failed to send", 3000, Notification.Position.MIDDLE)
             }
         }
         messageBtnLayout.add(sendBtn)
