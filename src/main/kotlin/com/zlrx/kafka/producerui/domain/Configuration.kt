@@ -10,19 +10,29 @@ import javax.persistence.Table
 @Entity
 @Table(name = "configuration")
 class Configuration(
-    @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
+
+    var name: String,
+
+    @OneToOne
     @JoinColumn(name = "connection_id")
     var connection: Connection,
 
-    @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
+    @OneToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "message_id")
     var message: Message,
 
-    @OneToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
+    @OneToOne
     @JoinColumn(name = "topic_id")
     var topic: Topic,
 
     @Column(name = "default_config")
     var default: Boolean = false
 
-) : BaseEntity()
+) : BaseEntity() {
+
+    fun copy(name: String): Configuration {
+        val messageCopy = message.copy()
+        return Configuration(name, connection, messageCopy, topic)
+    }
+
+}

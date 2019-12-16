@@ -16,4 +16,8 @@ class Header(
     @ManyToOne
     @JoinColumn(name = "message_id")
     var message: Message
-) : BaseEntity()
+) : BaseEntity() {
+
+    fun copy(message: Message): Header = Header(key, value, message)
+
+}

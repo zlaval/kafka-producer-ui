@@ -36,8 +36,10 @@ import com.zlrx.kafka.producerui.ui.component.ArrowText
 import com.zlrx.kafka.producerui.ui.component.Divider
 import org.springframework.beans.factory.annotation.Autowired
 
-//v2 -> register kafka, pick from select
-//v2 -> register topic with header-> pick
+enum class SAVE_TYPE {
+    UPDATE, SAVE
+}
+
 @Route
 class MainView @Autowired constructor(
     private val kafkaService: KafkaService,
@@ -63,7 +65,8 @@ class MainView @Autowired constructor(
     private val messageTxtArea = TextArea()
     private val messageTypeSelector = RadioButtonGroup<String>()
     private val sendBtn = Button("Send", Icon(VaadinIcon.BOLT))
-    private val newBtn = Button("Save", Icon(VaadinIcon.CHECK_CIRCLE))
+    private val saveBtn = Button("Save", Icon(VaadinIcon.CHECK_CIRCLE))
+    private val saveAsNewBtn = Button("Save as new", Icon(VaadinIcon.FOLDER_ADD))
     private val addConnectionBtn = Button(Icon(VaadinIcon.PLUS_CIRCLE))
     private val addTopicBtn = Button(Icon(VaadinIcon.PLUS_CIRCLE))
     private val fileLayout = VerticalLayout()
@@ -72,6 +75,8 @@ class MainView @Autowired constructor(
     private val topicDialog: Dialog = Dialog()
 
     private var configuration: Configuration
+
+    private var newConfigurationNameTxt = TextField()
 
     init {
         configuration = producerService.loadDefaultConfiguration()
@@ -111,11 +116,13 @@ class MainView @Autowired constructor(
         }
     }
 
-    private fun saveConfiguration() {
-        //TODO if save as new
+    private fun saveConfiguration(saveType: SAVE_TYPE) {
         configuration.connection = connectionSelect.value
         configuration.topic = topicSelect.value
         buildMessage(configuration.message)
+        if (saveType == SAVE_TYPE.SAVE) {
+            configuration = configuration.copy(newConfigurationNameTxt.value)
+        }
         configuration = producerService.saveConfiguration(configuration)
         Notification.show("Saved", 2000, Notification.Position.MIDDLE)
         loadConfiguration(configuration)
@@ -130,7 +137,9 @@ class MainView @Autowired constructor(
     }
 
     private fun loadConfiguration(configuration: Configuration) {
-        //TODO load selected configuration
+        headerGrid.setItems(configuration.message.headers)
+        headerGrid.dataProvider.refreshAll()
+        loadDefaultConfiguration()
     }
 
     private fun registerFilesComboBox() {
@@ -168,8 +177,8 @@ class MainView @Autowired constructor(
     }
 
     private fun registerTopicDialog() {
-        topicDialog.isCloseOnEsc = true
         topicDialog.isCloseOnOutsideClick = false
+        topicDialog.isCloseOnEsc = true
         topicDialog.width = "450px"
         val layout = VerticalLayout()
         layout.setSizeFull()
@@ -185,7 +194,7 @@ class MainView @Autowired constructor(
         val saveBtn = Button("Save")
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
 
-        closeBtn.addClickListener { connectionDialog.close() }
+        closeBtn.addClickListener { topicDialog.close() }
         saveBtn.addClickListener {
             //TODO validate
             val newTopic = producerService.saveTopic(nameTxt.value, topicTxt.value)
@@ -324,11 +333,37 @@ class MainView @Autowired constructor(
     }
 
     private fun registerNewButton() {
-        newBtn.style.set("minHeight", "40px")
-        newBtn.addClickListener {
-            saveConfiguration()
+        val saveDialog = Dialog()
+        saveDialog.isCloseOnEsc = true
+        saveDialog.isCloseOnOutsideClick = false
+        saveDialog.width = "400px"
+        newConfigurationNameTxt.setWidthFull()
+        newConfigurationNameTxt.label = "Name"
+        val layout = VerticalLayout()
+        layout.setSizeFull()
+        val buttonLayout = HorizontalLayout()
+        val closeBtn = Button("Close")
+        val saveNewBtn = Button("Save")
+        saveNewBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+        closeBtn.addClickListener { saveDialog.close() }
+        saveNewBtn.addClickListener {
+            saveConfiguration(SAVE_TYPE.SAVE)
+            newConfigurationNameTxt.value = ""
+            saveDialog.close()
         }
-        messageBtnLayout.add(newBtn)
+        buttonLayout.add(saveNewBtn, closeBtn)
+        layout.add(newConfigurationNameTxt)
+        saveDialog.add(layout, buttonLayout)
+
+        saveBtn.style.set("minHeight", "40px")
+        saveBtn.addClickListener {
+            saveConfiguration(SAVE_TYPE.UPDATE)
+        }
+        saveAsNewBtn.style.set("minHeight", "40px")
+        saveAsNewBtn.addClickListener {
+            saveDialog.open()
+        }
+        messageBtnLayout.add(saveBtn, saveAsNewBtn)
     }
 
     private fun registerSendBtn() {

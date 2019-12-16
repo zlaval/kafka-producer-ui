@@ -1,12 +1,13 @@
 package com.zlrx.kafka.producerui.domain
 
 import com.zlrx.kafka.producerui.utils.IdGenerator
+import java.io.Serializable
 import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 import javax.persistence.Version
 
 @MappedSuperclass
-abstract class BaseEntity {
+abstract class BaseEntity : Serializable {
 
     @Id
     val id: String = IdGenerator.generateId()

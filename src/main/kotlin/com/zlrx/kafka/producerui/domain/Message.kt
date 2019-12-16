@@ -24,6 +24,16 @@ class Message(
     @Column(name = "file_name")
     var fileName: String? = null,
 
-    @OneToMany(mappedBy = "message", cascade = [CascadeType.ALL], orphanRemoval = true,fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "message", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     var headers: MutableList<Header> = mutableListOf()
-) : BaseEntity()
+) : BaseEntity() {
+
+    fun copy(): Message {
+        val messageCopy = Message(key, text, file, filePath, fileName, mutableListOf())
+        val headersCopy: List<Header> = headers.map {
+            it.copy(messageCopy)
+        }
+        messageCopy.headers.addAll(headersCopy)
+        return messageCopy
+    }
+}

@@ -121,6 +121,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: name
+                  type: varchar(255)
+              - column:
+                  constraints:
+                    nullable: false
                   name: connection_id
                   type: varchar(32)
               - column:
