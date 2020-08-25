@@ -11,10 +11,9 @@ class ArrowText(val label: String, val msg: String) : Div() {
         this.add(Pointer(label))
         text = msg
     }
-
 }
 
-//@StyleSheet("pointer.css")
+// @StyleSheet("pointer.css")
 class Pointer(val label: String) : Div() {
 
     init {

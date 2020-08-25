@@ -11,8 +11,8 @@ import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.serialization.StringSerializer
 import java.util.Properties
 
-//v2: kafka server should be parameterized
-//v2: serializer pick on ui
+// v2: kafka server should be parameterized
+// v2: serializer pick on ui
 class Producer(props: ProducerProps) {
 
     private val properties: Properties = Properties()
@@ -29,7 +29,7 @@ class Producer(props: ProducerProps) {
         producer = KafkaProducer(properties)
     }
 
-    //FIXME if cant connect throw error not try forever
+    // FIXME if cant connect throw error not try forever
     fun produce(messageData: MessageData) {
         val headers = messageData.headers?.map {
             RecordHeader(it.key, it.value.toByteArray())

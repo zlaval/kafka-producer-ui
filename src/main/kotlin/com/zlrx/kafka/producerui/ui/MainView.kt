@@ -196,7 +196,7 @@ class MainView @Autowired constructor(
 
         closeBtn.addClickListener { topicDialog.close() }
         saveBtn.addClickListener {
-            //TODO validate
+            // TODO validate
             val newTopic = producerService.saveTopic(nameTxt.value, topicTxt.value)
             topicSelect.setItems(producerService.loadTopics())
             topicSelect.value = newTopic
@@ -232,7 +232,7 @@ class MainView @Autowired constructor(
 
         closeBtn.addClickListener { connectionDialog.close() }
         saveBtn.addClickListener {
-            //TODO validate
+            // TODO validate
             val newConnection = producerService.saveConnection(nameTxt.value, brokerTxt.value, schemaTxt.value)
             connectionSelect.setItems(producerService.loadConnections())
             connectionSelect.value = newConnection
@@ -296,7 +296,7 @@ class MainView @Autowired constructor(
     private fun registerHeaderLayout() {
         val headerLayout = VerticalLayout()
         headerLayout.setWidthFull()
-        headerTypeTxt.label = "Header key";
+        headerTypeTxt.label = "Header key"
         headerTypeTxt.value = ""
         headerTypeTxt.setWidthFull()
         headerValueTxt.label = "Header value"
@@ -370,23 +370,25 @@ class MainView @Autowired constructor(
         sendBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY)
         sendBtn.style.set("minHeight", "40px")
         sendBtn.addClickListener {
-            //TODO validate
+            // TODO validate
             try {
                 if (messageTypeSelector.value == "Text") {
-                    kafkaService.sendMessage(MessageData(
-                        topicSelect.value.topicName,
-                        keyTxtField.value,
-                        messageTxtArea.value,
-                        configuration.message.headers,
-                        ProducerProps(
-                            connectionSelect.value.broker,
-                            connectionSelect.value.schemaRegistry
+                    kafkaService.sendMessage(
+                        MessageData(
+                            topicSelect.value.topicName,
+                            keyTxtField.value,
+                            messageTxtArea.value,
+                            configuration.message.headers,
+                            ProducerProps(
+                                connectionSelect.value.broker,
+                                connectionSelect.value.schemaRegistry
+                            )
                         )
-                    ))
+                    )
                     Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
                     cleanUp()
                 } else {
-                    //TODO validate
+                    // TODO validate
                     Notification.show("Messages from file was started to send into the given topic!", 1500, Notification.Position.MIDDLE)
                     kafkaService.sendMessageFromFile(
                         FileData(
@@ -425,11 +427,10 @@ class MainView @Autowired constructor(
     }
 
     fun cleanUp() {
-        //TODO clean up field after message was sent, savable property to clean up
+        // TODO clean up field after message was sent, savable property to clean up
     }
 
     override fun configurePage(settings: InitialPageSettings?) {
         settings?.loadingIndicatorConfiguration?.isApplyDefaultTheme = false
     }
-
 }

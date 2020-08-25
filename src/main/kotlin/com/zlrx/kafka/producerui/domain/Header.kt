@@ -19,5 +19,4 @@ class Header(
 ) : BaseEntity() {
 
     fun copy(message: Message): Header = Header(key, value, message)
-
 }

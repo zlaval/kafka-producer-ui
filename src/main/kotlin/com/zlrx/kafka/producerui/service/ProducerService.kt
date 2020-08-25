@@ -34,6 +34,4 @@ class ProducerService @Autowired constructor(
     }
 
     fun loadDefaultConfiguration(): Configuration = configurationRepository.findByDefaultTrue()
-
 }
-

@@ -6,5 +6,4 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional(propagation = Propagation.MANDATORY)
-interface MessageRepository : CrudRepository<Message, String> {
-}
+interface MessageRepository : CrudRepository<Message, String>

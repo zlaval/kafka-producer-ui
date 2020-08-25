@@ -13,26 +13,28 @@ class KafkaService @Autowired constructor(
 
     private val logger = LoggerFactory.getLogger("KafkaService")
 
-    //v2 validate messageData
+    // v2 validate messageData
     fun sendMessage(messageData: MessageData) {
-        val producer =Producer(messageData.props)
+        val producer = Producer(messageData.props)
         producer.produce(messageData)
     }
 
     fun sendMessageFromFile(fileData: FileData) {
-        val producer =Producer(fileData.props)
+        val producer = Producer(fileData.props)
         var start = 0L
         logger.info("Start to process messages from file")
         var rows: List<String> = fileHandlerService.getLinesInBatch(fileData.filePath.path, start)
         while (rows.isNotEmpty()) {
             for (line in rows) {
-                producer.produce(MessageData(
-                    fileData.topic,
-                    fileData.key,
-                    line,
-                    fileData.headers,
-                    fileData.props
-                ))
+                producer.produce(
+                    MessageData(
+                        fileData.topic,
+                        fileData.key,
+                        line,
+                        fileData.headers,
+                        fileData.props
+                    )
+                )
             }
             start += BATCH_SIZE
             rows = fileHandlerService.getLinesInBatch(fileData.filePath.path, start)

@@ -16,4 +16,4 @@ spring:
       enabled: true
 json:
   file:
-    directory: ${STORAGE_PATH:./json}
+    directory: ${STORAGE_PATH:}

@@ -9,5 +9,4 @@ import org.springframework.transaction.annotation.Transactional
 interface TopicRepository : CrudRepository<Topic, String> {
 
     fun findByOrderByName(): List<Topic>
-
 }

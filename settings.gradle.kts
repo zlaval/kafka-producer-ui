@@ -1,1 +1,1 @@
-rootProject.name = "producer-ui"
+rootProject.name = "kafka-producer-ui"

@@ -9,5 +9,4 @@ class Divider : Span() {
         style.set("flex", "0 0 2px")
         style.set("align-self", "stretch")
     }
-
 }

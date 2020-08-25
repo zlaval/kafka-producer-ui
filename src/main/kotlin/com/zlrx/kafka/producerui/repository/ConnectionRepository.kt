@@ -8,5 +8,4 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(propagation = Propagation.MANDATORY)
 interface ConnectionRepository : CrudRepository<Connection, String> {
     fun findByOrderByName(): List<Connection>
-
 }

@@ -1,3 +1,6 @@
 id,version,name,broker,schema_registry
-c4395630e5e14df9b0b3c3a6e0afe312,1,Docker Kafka,kafka:9092,http://schema-registry:8081
-91ffb7e45e1243e4ad2c0524d9aebab,1,Localhost,localhost:29092,http://localhost:8081
+f2944185ed0b49419acd5057639a9c1a,1,Docker Kafka29092,kafka:29092,http://schema-registry:8081
+c4395630e5e14df9b0b3c3a6e0afe312,1,Docker Kafka9092,kafka:9092,http://schema-registry:8081
+91ffb7e45e1243e4ad2c0524d9aebab,1,Localhost29092,localhost:29092,http://localhost:8081
+5d2fa906cd084c7c8bf7fafcb0fb4ecc,1,Localhost9092,localhost:9092,http://localhost:8081
+473e41499e4646678c47f2250bba0dc6,1,Localhost TCONF,localhost:9092,http://localhost:8181

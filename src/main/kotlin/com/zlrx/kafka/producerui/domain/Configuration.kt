@@ -34,5 +34,4 @@ class Configuration(
         val messageCopy = message.copy()
         return Configuration(name, connection, messageCopy, topic)
     }
-
 }

@@ -29,6 +29,4 @@ abstract class BaseEntity : Serializable {
     override fun hashCode(): Int {
         return id.hashCode()
     }
-
-
 }
