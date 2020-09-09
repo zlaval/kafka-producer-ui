@@ -62,7 +62,7 @@ docker {
         baseImage.set("lpicanco/java11-alpine")
         ports.set(listOf(8080))
         maintainer.set("zalerix 'zalerix@gmail.com'")
-        images.set(setOf("zalerix/kafka-avro-publish-ui:latest","zalerix/kafka-avro-publish-ui:2.1.1"))
+        images.set(setOf("zalerix/kafka-avro-publish-ui:latest","zalerix/kafka-avro-publish-ui:2.2.1"))
         jvmArgs.set(listOf("-Xmx512m"))
     }
 }

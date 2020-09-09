@@ -24,6 +24,7 @@ import com.zlrx.kafka.producerui.domain.Configuration
 import com.zlrx.kafka.producerui.domain.Connection
 import com.zlrx.kafka.producerui.domain.Header
 import com.zlrx.kafka.producerui.domain.Message
+import com.zlrx.kafka.producerui.domain.Schemas
 import com.zlrx.kafka.producerui.domain.Topic
 import com.zlrx.kafka.producerui.message.FileData
 import com.zlrx.kafka.producerui.message.FilePath
@@ -32,6 +33,7 @@ import com.zlrx.kafka.producerui.message.ProducerProps
 import com.zlrx.kafka.producerui.service.FileHandlerService
 import com.zlrx.kafka.producerui.service.KafkaService
 import com.zlrx.kafka.producerui.service.ProducerService
+import com.zlrx.kafka.producerui.service.SchemaCollector
 import com.zlrx.kafka.producerui.ui.component.ArrowText
 import com.zlrx.kafka.producerui.ui.component.Divider
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,6 +45,7 @@ enum class SAVE_TYPE {
 @Route
 class MainView @Autowired constructor(
     private val kafkaService: KafkaService,
+    private val schemaCollector: SchemaCollector,
     private val producerService: ProducerService,
     private val fileHandlerService: FileHandlerService
 ) : HorizontalLayout(), PageConfigurator {
@@ -54,6 +57,7 @@ class MainView @Autowired constructor(
     private val connectionSelect = Select<Connection>()
 
     private val topicSelect = Select<Topic>()
+    private val schemaSelect = Select<Schemas>()
     private val keyTxtField = TextField()
 
     private val headerTypeTxt = TextField()
@@ -114,6 +118,7 @@ class MainView @Autowired constructor(
                 messageTxtArea.value = it.message?.text ?: ""
             }
         }
+        loadSchemas()
     }
 
     private fun saveConfiguration(saveType: SAVE_TYPE) {
@@ -236,6 +241,7 @@ class MainView @Autowired constructor(
             val newConnection = producerService.saveConnection(nameTxt.value, brokerTxt.value, schemaTxt.value)
             connectionSelect.setItems(producerService.loadConnections())
             connectionSelect.value = newConnection
+            loadSchemas()
             nameTxt.value = ""
             brokerTxt.value = ""
             schemaTxt.value = ""
@@ -262,6 +268,7 @@ class MainView @Autowired constructor(
             if (it.value != null) {
                 kafkaDiv.text = "Broker: ${it.value.broker}"
                 registryDiv.text = "Registry: ${it.value.schemaRegistry}"
+                loadSchemas()
             }
         }
         addConnectionBtn.addClickListener { connectionDialog.open() }
@@ -287,10 +294,24 @@ class MainView @Autowired constructor(
         topicSelectLayout.add(topicSelect, addTopicBtn)
         topicSelectLayout.alignItems = FlexComponent.Alignment.BASELINE
 
+        schemaSelect.label = "Schema"
+        schemaSelect.setWidthFull()
+        schemaSelect.setTextRenderer { it.name }
+        loadSchemas()
+
         keyTxtField.label = "Key (optional)"
         keyTxtField.setWidthFull()
-        topicLayout.add(topicSelectLayout, keyTxtField)
+        topicLayout.add(topicSelectLayout, schemaSelect, keyTxtField)
         propertyLayout.add(topicLayout, Divider())
+    }
+
+    private fun loadSchemas() {
+        val url = connectionSelect.value?.schemaRegistry
+        val data = schemaCollector.getSchemasFromRegistry(url)
+        schemaSelect.setItems(data)
+        if (data.isNotEmpty()) {
+            schemaSelect.value = data.first()
+        }
     }
 
     private fun registerHeaderLayout() {
@@ -382,7 +403,8 @@ class MainView @Autowired constructor(
                             ProducerProps(
                                 connectionSelect.value.broker,
                                 connectionSelect.value.schemaRegistry
-                            )
+                            ),
+                            schemaSelect.value?.schema
                         )
                     )
                     Notification.show("Message was sent into the given topic!", 2000, Notification.Position.MIDDLE)
@@ -399,13 +421,14 @@ class MainView @Autowired constructor(
                             ProducerProps(
                                 connectionSelect.value.broker,
                                 connectionSelect.value.schemaRegistry
-                            )
+                            ),
+                            schemaSelect.value?.schema
                         )
                     )
                     Notification.show("All message has been processed from the file, it may take time while it will be written to the given topic", 3000, Notification.Position.MIDDLE)
                 }
             } catch (e: Exception) {
-                Notification.show("Failed to send", 3000, Notification.Position.MIDDLE)
+                Notification.show("Failed to send: ${e.message}", 4000, Notification.Position.MIDDLE)
             }
         }
         messageBtnLayout.add(sendBtn)

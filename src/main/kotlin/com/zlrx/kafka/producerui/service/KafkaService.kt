@@ -32,7 +32,8 @@ class KafkaService @Autowired constructor(
                         fileData.key,
                         line,
                         fileData.headers,
-                        fileData.props
+                        fileData.props,
+                        fileData.schema
                     )
                 )
             }

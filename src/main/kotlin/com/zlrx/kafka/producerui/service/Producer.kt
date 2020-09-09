@@ -4,6 +4,8 @@ import com.zlrx.kafka.producerui.message.MessageData
 import com.zlrx.kafka.producerui.message.ProducerProps
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
+import org.apache.avro.generic.GenericDatumReader
+import org.apache.avro.io.DecoderFactory
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -16,7 +18,7 @@ import java.util.Properties
 class Producer(props: ProducerProps) {
 
     private val properties: Properties = Properties()
-    private val producer: KafkaProducer<String, String>
+    private val producer: KafkaProducer<String, Any>
 
     init {
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.bootStrapServer)
@@ -34,7 +36,17 @@ class Producer(props: ProducerProps) {
         val headers = messageData.headers?.map {
             RecordHeader(it.key, it.value.toByteArray())
         }
-        val record = ProducerRecord(messageData.topic, null, messageData.key, messageData.message, headers)
+        val data = serializeToAvro(messageData)
+        val record = ProducerRecord(messageData.topic, null, messageData.key, data, headers)
         producer.send(record).get()
+    }
+
+    private fun serializeToAvro(messageData: MessageData): Any {
+        val json = messageData.message
+        val schema = messageData.schema ?: return json
+
+        val decoder = DecoderFactory.get().jsonDecoder(schema, json)
+        val reader = GenericDatumReader<Any>(schema)
+        return reader.read(null, decoder)
     }
 }
